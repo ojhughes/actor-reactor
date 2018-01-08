@@ -1,11 +1,13 @@
 package me.ohughes.actorreactor.publishers;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Supplier;
 import java.util.stream.BaseStream;
+import java.util.stream.Stream;
 
-import me.ohughes.actorreactor.functions.ExtractActorFunction;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
@@ -16,11 +18,14 @@ public class ReactiveFileLoader {
 
 	}
 
-	private static Flux<String> fromPath(Path path) {
-		return Flux.using(() -> Files.lines(path),
-				Flux::fromStream,
-				BaseStream::close
-		);
+	private static Flux<String> fromPath(Path sourcePath) {
+		return Flux.fromStream(() -> {
+			try {
+				return Files.lines(sourcePath);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		});
 	}
 
 }

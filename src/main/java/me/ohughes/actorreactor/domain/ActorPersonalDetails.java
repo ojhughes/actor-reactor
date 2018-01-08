@@ -1,10 +1,10 @@
 package me.ohughes.actorreactor.domain;
 
-import java.time.LocalDate;
 import java.time.Year;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder

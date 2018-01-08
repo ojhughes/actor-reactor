@@ -25,7 +25,7 @@ public class ExtractActorFunction implements Function<Flux<String>, Flux<ActorPe
 			parseInt(s);
 			return true;
 		} catch (NumberFormatException nfe){
-			return true;
+			return false;
 		}
 	}
 }
