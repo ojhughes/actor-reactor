@@ -31,8 +31,9 @@ repositories {
 def superCsvVersion = '2.4.0'
 
 dependencies {
-	compile('org.springframework.boot:spring-boot-starter')
-	compile('org.springframework.boot:spring-boot-starter-reactor-netty')
+//	compile('org.springframework.boot:spring-boot-starter')
+//	compile('org.springframework.boot:spring-boot-starter-reactor-netty')
+	compile('org.springframework.boot:spring-boot-starter-webflux')
 	compile("net.sf.supercsv:super-csv-java8:${superCsvVersion}")
 	runtime('org.springframework.boot:spring-boot-devtools')
 	compileOnly('org.springframework.boot:spring-boot-configuration-processor')

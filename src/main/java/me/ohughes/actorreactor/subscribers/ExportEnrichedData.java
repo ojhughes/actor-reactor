@@ -2,13 +2,9 @@ package me.ohughes.actorreactor.subscribers;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,14 +14,11 @@ import lombok.extern.slf4j.Slf4j;
 import me.ohughes.actorreactor.domain.ActorInformation;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
-import org.springframework.core.io.buffer.DefaultDataBuffer;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.stereotype.Component;
-import org.supercsv.cellprocessor.Optional;
-import org.supercsv.cellprocessor.ift.CellProcessor;
-import org.supercsv.io.CsvBeanWriter;
 import org.supercsv.io.CsvMapWriter;
 import org.supercsv.prefs.CsvPreference;
+import org.supercsv.quote.AlwaysQuoteMode;
 import reactor.core.publisher.Flux;
 
 @Component
@@ -41,14 +34,11 @@ public class ExportEnrichedData {
 				StandardOpenOption.WRITE,
 				StandardOpenOption.CREATE)) {
 
-			enrichedData.map(this::formatFileLine).doOnNext(csvLine -> log.info(new String(csvLine))).blockLast();
-
-//			Flux<DataBuffer> bufferedData = enrichedData.map(fileLine -> {
-//				byte[] bytes = formatFileLine(fileLine);
-//				return dataBufferFactory.wrap(bytes);
-//			});
-//			DataBufferUtils.write(bufferedData, asyncFile, 0);
-//			bufferedData.blockLast();
+			Flux<DataBuffer> bufferedData = enrichedData.map(fileLine -> {
+				byte[] bytes = formatFileLine(fileLine);
+				return dataBufferFactory.wrap(bytes);
+			});			Flux<DataBuffer> writeResult = DataBufferUtils.write(bufferedData, asyncFile, 0);
+			writeResult.map(DataBufferUtils::release).blockLast();
 
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -60,7 +50,9 @@ public class ExportEnrichedData {
 		try (
 				ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
 				Writer inMemoryWriter = new BufferedWriter(new OutputStreamWriter(byteOutputStream));
-				CsvMapWriter csvWriter = new CsvMapWriter(inMemoryWriter, CsvPreference.STANDARD_PREFERENCE);
+				CsvMapWriter csvWriter = new CsvMapWriter(inMemoryWriter,
+						new CsvPreference.Builder(CsvPreference.STANDARD_PREFERENCE).useQuoteMode(new AlwaysQuoteMode()).build(),
+						false);
 		) {
 
 			String[] fields = {
@@ -71,18 +63,11 @@ public class ExportEnrichedData {
 					"recentNewsSource",
 					"recentNewsContent",
 			};
-			CellProcessor[] processors = new CellProcessor[] {
-					new Optional(),
-					new Optional(),
-					new Optional(),
-					new Optional(),
-					new Optional(),
-					new Optional()
-			};
 
-					csvWriter.writeHeader(fields);
-			csvWriter.write(actorInformation.getFlattenedActorInformation(), fields, processors);
+			csvWriter.write(actorInformation.getFlattenedActorInformation(), fields);
+			inMemoryWriter.flush();
 			return byteOutputStream.toByteArray();
+
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

@@ -5,10 +5,12 @@ import me.ohughes.actorreactor.domain.ActorInformation;
 import me.ohughes.actorreactor.domain.ActorPersonalDetails;
 import me.ohughes.actorreactor.domain.RecentNews;
 import me.ohughes.actorreactor.functions.ExtractActorFunction;
+import me.ohughes.actorreactor.functions.NotableActorsOnlyFunction;
 import me.ohughes.actorreactor.publishers.ReactiveFileLoader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+
 
 @Service
 public class ActorEnrichmentService {
@@ -25,7 +27,7 @@ public class ActorEnrichmentService {
 		Flux<ActorPersonalDetails> actorDetailFlux = fileFlux.transform(new ExtractActorFunction());
 		Flux<ActorPersonalDetails> notableActorsOnly = filterNotableActorsOnly(actorDetailFlux);
 		Flux<ActorPersonalDetails> sortedNotableActors = sortActors(notableActorsOnly);
-		Flux<AcclaimedPerformance> enrichedWithAcclaimedPerformances = enrichWithAcclaimedPerforamances(sortedNotableActors);
+		Flux<AcclaimedPerformance> enrichedWithAcclaimedPerformances = enrichWithAcclaimedPerformances(sortedNotableActors);
 		Flux<RecentNews> enrichedWithRecentNews = enrichWithRecentNews(sortedNotableActors);
 		return mergeEnrichedData(enrichedWithAcclaimedPerformances, enrichedWithRecentNews, sortedNotableActors);
 	}
@@ -42,11 +44,12 @@ public class ActorEnrichmentService {
 		return null;
 	}
 
-	private Flux<AcclaimedPerformance> enrichWithAcclaimedPerforamances(Flux<ActorPersonalDetails> notableActorsOnly) {
+	private Flux<AcclaimedPerformance> enrichWithAcclaimedPerformances(Flux<ActorPersonalDetails> notableActorsOnly) {
+
 		return null;
 	}
 
 	private Flux<ActorPersonalDetails> filterNotableActorsOnly(Flux<ActorPersonalDetails> actorDetailFlux) {
-		return actorDetailFlux;
+		return actorDetailFlux.transform(new NotableActorsOnlyFunction());
 	}
 }
