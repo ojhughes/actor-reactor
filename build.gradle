@@ -29,11 +29,13 @@ repositories {
 }
 
 def superCsvVersion = '2.4.0'
+def jsoupVersion = '1.11.2'
+def gsonVersion = '2.7'
 
 dependencies {
-//	compile('org.springframework.boot:spring-boot-starter')
-//	compile('org.springframework.boot:spring-boot-starter-reactor-netty')
 	compile('org.springframework.boot:spring-boot-starter-webflux')
+	compile("com.google.code.gson:gson:${gsonVersion}")
+	compile("org.jsoup:jsoup:${jsoupVersion}")
 	compile("net.sf.supercsv:super-csv-java8:${superCsvVersion}")
 	runtime('org.springframework.boot:spring-boot-devtools')
 	compileOnly('org.springframework.boot:spring-boot-configuration-processor')

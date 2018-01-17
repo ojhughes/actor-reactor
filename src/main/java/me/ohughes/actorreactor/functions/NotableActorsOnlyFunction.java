@@ -2,14 +2,15 @@ package me.ohughes.actorreactor.functions;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import me.ohughes.actorreactor.domain.ActorPersonalDetails;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.util.DefaultUriBuilderFactory;
-import org.springframework.web.util.UriBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -26,12 +27,25 @@ public class NotableActorsOnlyFunction implements Function<Flux<ActorPersonalDet
 				.map(actor -> buildWebClient(actor.getFullName())
 						.get()
 						.retrieve()
-						.bodyToMono(String.class))
-						.subscribe(NotableActorsOnlyFunction::handleRespose);
+						.bodyToFlux(String.class))
+						.map(NotableActorsOnlyFunction::handleResponse);
+		return null;
 	}
 
-	private static void handleRespose(Mono<String> responseMono) {
-
+	private static Flux<String> handleResponse(Flux<String> responseMono) {
+		return responseMono.map(response -> {
+			JsonObject jsonObject = new JsonParser().parse(response).getAsJsonObject();
+			String wikiContent = "";
+			for (Map.Entry<String, JsonElement> dynamicKey : jsonObject.getAsJsonObject("query").getAsJsonObject("pages").entrySet()) {
+				JsonObject page = (JsonObject) dynamicKey.getValue();
+				JsonArray revisionsArray = page.getAsJsonArray("revisions");
+				if (revisionsArray.size() == 0) {
+					System.exit(1);
+				}
+				wikiContent = revisionsArray.get(0).getAsJsonObject().getAsJsonPrimitive("*").getAsString();
+			}
+			return wikiContent;
+		});
 	}
 
 	private static WebClient buildWebClient(String actorName) {
@@ -40,6 +54,5 @@ public class NotableActorsOnlyFunction implements Function<Flux<ActorPersonalDet
 		} catch (UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
 		}
-	}
 	}
 }
